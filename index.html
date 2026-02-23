@@ -29,7 +29,7 @@
     body { display: flex; align-items: center; justify-content: center; background: #E8E8EC; }
     .deck { width: min(96vw, 1280px); height: min(54vw, 720px); border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06); background: var(--bg); overflow: hidden; }
   }
-  .slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 64px 96px; opacity: 0; transition: opacity 0.45s ease; background: var(--bg); }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: flex-start; padding: 56px 96px; opacity: 0; transition: opacity 0.45s ease; background: var(--bg); }
   .slide.active { display: flex; opacity: 1; }
 
   @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
@@ -61,16 +61,18 @@
   h3 { font-weight: 600; font-size: 1rem; margin-bottom: 14px; }
   h2 .accent-dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 12px; vertical-align: middle; position: relative; top: -1px; }
 
-  .slide--title { align-items: center; text-align: center; }
+  .slide--title { align-items: center; text-align: center; justify-content: center; }
   .slide--title h1 { font-size: 3rem; }
   .slide--title h1 .blue { color: var(--accent); }
   .slide--title .subtitle { font-size: 1.15rem; color: var(--text-secondary); margin-top: 14px; font-weight: 400; }
   .slide--title .meta { margin-top: 48px; font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); }
+  .slide--title .hero-img { width: 180px; height: 180px; object-fit: contain; margin-bottom: 28px; border-radius: 50%; opacity: 0; }
+  .slide--title.active .hero-img { animation: scaleIn 0.6s ease 0s both; }
   .slide--title.active h1 { animation: titleReveal 0.7s ease both; }
   .slide--title.active .subtitle { animation: subtitleFade 0.5s ease 0.3s both; }
   .slide--title.active .meta { animation: subtitleFade 0.5s ease 0.6s both; }
 
-  .slide--section { align-items: flex-start; justify-content: flex-end; padding-bottom: 120px; }
+  .slide--section { align-items: flex-start; justify-content: flex-end; padding-bottom: 120px !important; }
   .slide--section .section-num { font-size: 9rem; font-weight: 700; color: var(--accent); opacity: 0; line-height: 1; position: absolute; right: 96px; top: 50%; transform: translateY(-50%); }
   .slide--section.active .section-num { animation: slideInNumber 0.6s ease 0.1s both; }
   .slide--section h2 { font-size: 2.4rem; margin-bottom: 10px; }
@@ -176,6 +178,14 @@
   .chat-status { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 16px; border-radius: 20px; background: var(--accent-green-light); color: var(--accent-green); font-size: 0.82rem; font-weight: 600; opacity: 0; transform: scale(0.8); margin-top: 4px; }
   .chat-status.show { opacity: 1; transform: scale(1); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1); }
 
+  /* Image layouts */
+  .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .split-layout .content { gap: 16px; }
+  .slide-illust { max-width: 100%; max-height: 320px; border-radius: var(--radius); object-fit: contain; opacity: 0; }
+  .slide.active .slide-illust { animation: fadeInRight 0.6s ease 0.2s both; }
+  @keyframes floatImg { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .slide.active .slide-illust.float { animation: fadeInRight 0.6s ease 0.2s both, floatImg 4s ease-in-out 1s infinite; }
+
   .progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s ease; z-index: 100; }
   .counter { position: absolute; bottom: 14px; right: 24px; font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); z-index: 100; }
   .nav-hint { position: absolute; bottom: 14px; left: 24px; font-size: 0.68rem; color: var(--text-muted); opacity: 0.35; z-index: 100; }
@@ -194,6 +204,8 @@
     .slide { padding: 48px 56px; } h1 { font-size: 2.4rem !important; } h2 { font-size: 1.5rem; margin-bottom: 28px; }
     .slide--section h2 { font-size: 2rem; } .slide--section .section-num { font-size: 6rem; right: 56px; }
     .two-col, .three-col { grid-template-columns: 1fr; gap: 20px; }
+    .split-layout { grid-template-columns: 1fr; gap: 24px; }
+    .slide-illust { max-height: 200px; justify-self: center; }
   }
   @media (max-width: 640px) {
     .slide { padding: 32px 24px; } h1 { font-size: 1.8rem !important; } h2 { font-size: 1.25rem; margin-bottom: 20px; }
@@ -202,6 +214,9 @@
     .content { gap: 12px; } .point { font-size: 0.9rem; gap: 10px; } .point .ico { width: 24px; height: 24px; font-size: 0.65rem; }
     .card { padding: 14px 16px; font-size: 0.88rem; } .code { padding: 14px 16px; font-size: 0.68rem; }
     .two-col, .three-col { grid-template-columns: 1fr; gap: 14px; }
+    .split-layout { grid-template-columns: 1fr; gap: 16px; }
+    .split-layout .content { order: 1; }
+    .slide-illust { max-height: 160px; order: 0; justify-self: center; }
     .node { padding: 8px 14px; min-width: 70px; } .flow-box { padding: 6px 12px; font-size: 0.78rem; }
     .bug { padding: 12px 14px; } .bug .bug-t { font-size: 0.85rem; } .bug .bug-d { font-size: 0.8rem; }
     .counter { font-size: 0.7rem; } .nav-hint { display: none; }
@@ -214,6 +229,7 @@
 
 <!-- ═══════ 0: Title ═══════ -->
 <div class="slide slide--title active">
+  <img class="hero-img" src="assets/presentation/title-hero.png" alt="">
   <h1><span class="blue">AI Agent</span> 實戰分享</h1>
   <div class="subtitle">用 OpenClaw 打造你的個人 AI 團隊</div>
   <div class="meta">2026.02</div>
@@ -290,25 +306,25 @@
 <!-- ═══════ 5: Hub-and-Spoke ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>Hub-and-Spoke 架構</h2>
-  <div class="content" style="align-items: center;">
-    <div class="diagram">
-      <div class="node anim-up d2"><div class="n-label">📊 財務</div><div class="n-sub">記帳 / 預算</div></div>
-      <div class="node anim-up d3"><div class="n-label">🔍 情報</div><div class="n-sub">新聞 / 社群</div></div>
-      <div class="node anim-up d4"><div class="n-label">💻 技術</div><div class="n-sub">程式 / 工具</div></div>
+  <div class="split-layout">
+    <div class="content" style="align-items: center;">
+      <div class="diagram">
+        <div class="node anim-up d2"><div class="n-label">📊 財務</div><div class="n-sub">記帳 / 預算</div></div>
+        <div class="node anim-up d3"><div class="n-label">🔍 情報</div><div class="n-sub">新聞 / 社群</div></div>
+        <div class="node anim-up d4"><div class="n-label">💻 技術</div><div class="n-sub">程式 / 工具</div></div>
+      </div>
+      <div class="diagram">
+        <div class="node anim-up d5"><div class="n-label">📋 行政</div><div class="n-sub">排程 / 待辦</div></div>
+        <div class="node node--center anim-scale d4"><div class="n-label">⚙️ 營運長</div><div class="n-sub">Hub · 調度中心</div></div>
+        <div class="node anim-up d5"><div class="n-label">📦 物流</div><div class="n-sub">包裹追蹤</div></div>
+      </div>
+      <div class="diagram">
+        <div class="node anim-up d6"><div class="n-label">🛒 營業</div><div class="n-sub">接單 / 客服</div></div>
+        <div class="node anim-up d7"><div class="n-label">📢 行銷</div><div class="n-sub">策略 / 趨勢</div></div>
+        <div class="node anim-up d8"><div class="n-label">🏷️ 商品</div><div class="n-sub">選品 / 建檔</div></div>
+      </div>
     </div>
-    <div class="diagram">
-      <div class="node anim-up d5"><div class="n-label">📋 行政</div><div class="n-sub">排程 / 待辦</div></div>
-      <div class="node node--center anim-scale d4"><div class="n-label">⚙️ 營運長</div><div class="n-sub">Hub · 調度中心</div></div>
-      <div class="node anim-up d5"><div class="n-label">📦 物流</div><div class="n-sub">包裹追蹤</div></div>
-    </div>
-    <div class="diagram">
-      <div class="node anim-up d6"><div class="n-label">🛒 營業</div><div class="n-sub">接單 / 客服</div></div>
-      <div class="node anim-up d7"><div class="n-label">📢 行銷</div><div class="n-sub">策略 / 趨勢</div></div>
-      <div class="node anim-up d8"><div class="n-label">🏷️ 商品</div><div class="n-sub">選品 / 建檔</div></div>
-    </div>
-    <div class="card card--accent anim-up d9" style="margin-top: 8px;">
-      中心 Agent 負責跨部門協調。每個 Agent 有獨立的 <strong>workspace · 人格 · 工具 · model</strong>。
-    </div>
+    <img class="slide-illust float" src="assets/presentation/hub-spoke.png" alt="">
   </div>
 </div>
 
@@ -531,8 +547,8 @@ workspace/
 <!-- ═══════ 13: SOUL.md ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>SOUL.md — 賦予 Agent 人格</h2>
-  <div class="content">
-    <div class="two-col">
+  <div class="split-layout">
+    <div class="content">
       <div class="code anim-up d2" style="font-size:.75rem"><span class="cm"># SOUL.md — 情報分析師</span>
 
 <span class="st">## 身份</span>
@@ -557,6 +573,7 @@ workspace/
           <span class="dim">延伸應用：讓 Agent 用各自人格在社群平台自動發文互動——不只好玩，也是 LLM 長期行為一致性的壓力測試。</span>
         </div>
       </div>
+    <img class="slide-illust float" src="assets/presentation/soul-agent.png" alt="">
     </div>
   </div>
 </div>
@@ -564,8 +581,8 @@ workspace/
 <!-- ═══════ 13: Memory ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>三層記憶架構</h2>
-  <div class="content">
-    <div class="two-col">
+  <div class="split-layout">
+    <div class="content">
       <div>
         <div class="layer-stack">
           <div class="layer anim-drop d2" style="border-color: var(--accent-purple); width: 100%;">
@@ -589,11 +606,10 @@ workspace/
         <div class="point anim-up d4"><div class="ico ico--green">✍️</div><span>重要事件即時記錄</span></div>
         <div class="point anim-up d5"><div class="ico ico--amber">🔄</div><span>凌晨自動回顧 + 提煉精華</span></div>
         <div class="card card--accent anim-up d7" style="margin-top: 12px;">
-          Agent 每次重啟都失憶。<br>
-          <strong>記憶系統就是它的延續性</strong>——<br>
-          像人靠筆記本，Agent 靠 .md 檔案。
+          Agent 每次重啟都失憶。<strong>記憶系統就是它的延續性。</strong>
         </div>
       </div>
+    <img class="slide-illust float" src="assets/presentation/memory-layers.png" alt="">
     </div>
   </div>
 </div>
@@ -601,8 +617,8 @@ workspace/
 <!-- ═══════ 14: Skill ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>Skill — 教 Agent 用工具</h2>
-  <div class="content">
-    <div class="two-col">
+  <div class="split-layout">
+    <div class="content">
       <div class="code anim-up d2" style="font-size:.72rem"><span class="cm"># 每日情報摘要 Skill</span>
 
 <span class="kw">## 觸發條件</span>
@@ -625,10 +641,10 @@ workspace/
         <div class="point anim-up d4"><div class="ico ico--green">🤖</div><span>Agent 根據任務<strong>自動選擇</strong>要用哪個 Skill</span></div>
         <div class="point anim-up d5"><div class="ico ico--amber">📝</div><span><strong>LESSONS.md</strong> — Agent 踩坑後自己記下來，下次不再犯</span></div>
         <div class="card card--accent anim-up d7" style="margin-top: 12px;">
-          Skill 就像 <strong>SOP 文件</strong>——<br>
-          告訴 Agent「遇到這種任務，照這個流程做」。
+          Skill 就像 <strong>SOP 文件</strong>——告訴 Agent「遇到這種任務，照這個流程做」。
         </div>
       </div>
+    <img class="slide-illust float" src="assets/presentation/skills-toolbox.png" alt="">
     </div>
   </div>
 </div>
