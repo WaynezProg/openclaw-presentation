@@ -738,7 +738,10 @@ workspace/
       <strong>⚠ Embedding 需要 API Key：</strong>預設用 OpenAI <code>text-embedding-3-small</code>，沒設定 key 的話 memory_search 不會運作。也支援 Gemini、Voyage、或本地模型（需另外設定）
     </div>
     <div class="card card--accent anim-up d6" style="margin-top: 6px;">
-      <strong>進階功能：</strong>Hybrid Search（BM25 + 向量）· 時間衰減（新記憶優先）· MMR 去重 · Session 逐字稿索引（實驗性）
+      <strong>內建預設：</strong>Hybrid Search（BM25 + 向量）· 時間衰減（新記憶優先）· MMR 去重 · Embedding Cache（避免重複呼叫 API）· Context Pruning（<code>cache-ttl</code> 模式，每 1h 自動清理肥大的 tool result）
+    </div>
+    <div class="card card--purple anim-up d7" style="margin-top: 6px;">
+      <strong>需另外開啟：</strong>Session 逐字稿索引（實驗性，將歷史對話也納入 memory_search 範圍）
     </div>
   </div>
 </div>
