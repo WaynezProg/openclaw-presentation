@@ -186,6 +186,10 @@
   @keyframes floatImg { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   .slide.active .slide-illust.float { animation: fadeInRight 0.6s ease 0.2s both, floatImg 4s ease-in-out 1s infinite; }
 
+  /* Inline image — floats to the right, text wraps around */
+  .img-inline { float: right; max-width: 180px; max-height: 180px; margin: 0 0 12px 24px; border-radius: var(--radius); object-fit: contain; opacity: 0; }
+  .slide.active .img-inline { animation: fadeInRight 0.5s ease 0.15s both, floatImg 4s ease-in-out 1s infinite; }
+
   .progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s ease; z-index: 100; }
   .counter { position: absolute; bottom: 14px; right: 24px; font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); z-index: 100; }
   .nav-hint { position: absolute; bottom: 14px; left: 24px; font-size: 0.68rem; color: var(--text-muted); opacity: 0.35; z-index: 100; }
@@ -547,9 +551,9 @@ workspace/
 <!-- ═══════ 13: SOUL.md ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>SOUL.md — 賦予 Agent 人格</h2>
-  <div class="split-layout">
-    <div class="content">
-      <div class="code anim-up d2" style="font-size:.75rem"><span class="cm"># SOUL.md — 情報分析師</span>
+  <div class="content">
+    <img class="img-inline" src="assets/presentation/soul-agent.png" alt="">
+    <div class="code anim-up d2" style="font-size:.75rem"><span class="cm"># SOUL.md — 情報分析師</span>
 
 <span class="st">## 身份</span>
 你是情報分析師，負責每日新聞摘要。
@@ -564,57 +568,54 @@ workspace/
 - AI 產業動態
 - 國際重大事件
 - 技術趨勢</div>
-      <div>
-        <div class="point anim-up d3"><div class="ico ico--blue">🧠</div><span>Agent 每次啟動都讀 SOUL.md — 像人的<strong>性格</strong></span></div>
-        <div class="point anim-up d4"><div class="ico ico--green">🎭</div><span>不同 Agent 寫不同 SOUL.md = 不同角色</span></div>
-        <div class="point anim-up d5"><div class="ico ico--purple">✍️</div><span>第一次啟動時 Agent <strong>自己寫</strong>出 SOUL.md — 你只需要聊天描述角色</span></div>
-        <div class="card card--accent anim-up d6" style="margin-top: 12px;">
-          換一組 .md 檔案 = 換一個完全不同的 Agent。不用改程式，不用重新訓練。<br>
-          <span class="dim">延伸應用：讓 Agent 用各自人格在社群平台自動發文互動——不只好玩，也是 LLM 長期行為一致性的壓力測試。</span>
-        </div>
+    <div>
+      <div class="point anim-up d3"><div class="ico ico--blue">🧠</div><span>Agent 每次啟動都讀 SOUL.md — 像人的<strong>性格</strong></span></div>
+      <div class="point anim-up d4"><div class="ico ico--green">🎭</div><span>不同 Agent 寫不同 SOUL.md = 不同角色</span></div>
+      <div class="point anim-up d5"><div class="ico ico--purple">✍️</div><span>第一次啟動時 Agent <strong>自己寫</strong>出 SOUL.md — 你只需要聊天描述角色</span></div>
+      <div class="card card--accent anim-up d6" style="margin-top: 12px;">
+        換一組 .md 檔案 = 換一個完全不同的 Agent。不用改程式，不用重新訓練。<br>
+        <span class="dim">延伸應用：讓 Agent 用各自人格在社群平台自動發文互動——不只好玩，也是 LLM 長期行為一致性的壓力測試。</span>
       </div>
     </div>
-    <img class="slide-illust float" src="assets/presentation/soul-agent.png" alt="">
   </div>
 </div>
 
 <!-- ═══════ 13: Memory ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>三層記憶架構</h2>
-  <div class="split-layout">
-    <div class="content">
-      <div class="layer-stack">
-        <div class="layer anim-drop d2" style="border-color: var(--accent-purple); width: 100%;">
-          <div class="l-title" style="color: var(--accent-purple);">MEMORY.md — 長期記憶</div>
-          <div class="l-desc">提煉後的精華：決策、偏好、教訓</div>
-        </div>
-        <div class="layer-arrow anim-up d3">↓</div>
-        <div class="layer anim-drop d4" style="border-color: var(--accent); width: 100%;">
-          <div class="l-title" style="color: var(--accent);">memory/YYYY-MM-DD.md</div>
-          <div class="l-desc">每日原始記錄</div>
-        </div>
-        <div class="layer-arrow anim-up d5">↓</div>
-        <div class="layer anim-drop d6" style="border-color: var(--accent-green); width: 100%;">
-          <div class="l-title" style="color: var(--accent-green);">memory_search — 語意檢索</div>
-          <div class="l-desc">Embedding 搜尋，跨檔案找相關內容</div>
-        </div>
+  <div class="content">
+    <img class="img-inline" src="assets/presentation/memory-layers.png" alt="">
+    <div class="layer-stack" style="max-width: 55%;">
+      <div class="layer anim-drop d2" style="border-color: var(--accent-purple); width: 100%;">
+        <div class="l-title" style="color: var(--accent-purple);">MEMORY.md — 長期記憶</div>
+        <div class="l-desc">提煉後的精華：決策、偏好、教訓</div>
       </div>
-      <div class="point anim-up d7"><div class="ico ico--blue">📖</div><span>每次啟動讀今天 + 昨天的筆記</span></div>
-      <div class="point anim-up d8"><div class="ico ico--green">✍️</div><span>重要事件即時記錄，凌晨自動提煉精華</span></div>
-      <div class="card card--accent anim-up d9" style="margin-top: 8px;">
-        Agent 每次重啟都失憶。<strong>記憶系統就是它的延續性。</strong>
+      <div class="layer-arrow anim-up d3">↓</div>
+      <div class="layer anim-drop d4" style="border-color: var(--accent); width: 100%;">
+        <div class="l-title" style="color: var(--accent);">memory/YYYY-MM-DD.md</div>
+        <div class="l-desc">每日原始記錄</div>
+      </div>
+      <div class="layer-arrow anim-up d5">↓</div>
+      <div class="layer anim-drop d6" style="border-color: var(--accent-green); width: 100%;">
+        <div class="l-title" style="color: var(--accent-green);">memory_search — 語意檢索</div>
+        <div class="l-desc">Embedding 搜尋，跨檔案找相關內容</div>
       </div>
     </div>
-    <img class="slide-illust float" src="assets/presentation/memory-layers.png" alt="">
+    <div style="clear:both;"></div>
+    <div class="point anim-up d7"><div class="ico ico--blue">📖</div><span>每次啟動讀今天 + 昨天的筆記</span></div>
+    <div class="point anim-up d8"><div class="ico ico--green">✍️</div><span>重要事件即時記錄，凌晨自動提煉精華</span></div>
+    <div class="card card--accent anim-up d9" style="margin-top: 8px;">
+      Agent 每次重啟都失憶。<strong>記憶系統就是它的延續性。</strong>
+    </div>
   </div>
 </div>
 
 <!-- ═══════ 14: Skill ═══════ -->
 <div class="slide">
   <h2 class="anim-up d1"><span class="accent-dot"></span>Skill — 教 Agent 用工具</h2>
-  <div class="split-layout">
-    <div class="content">
-      <div class="code anim-up d2" style="font-size:.72rem"><span class="cm"># 每日情報摘要 Skill</span>
+  <div class="content">
+    <img class="img-inline" src="assets/presentation/skills-toolbox.png" alt="">
+    <div class="code anim-up d2" style="font-size:.72rem"><span class="cm"># 每日情報摘要 Skill</span>
 
 <span class="kw">## 觸發條件</span>
 每天 07:30 自動執行
@@ -631,16 +632,14 @@ workspace/
 
 <span class="kw">## 注意事項</span>
 - 每條必須附原始連結</div>
-      <div>
-        <div class="point anim-up d3"><div class="ico ico--blue">📄</div><span>Skill = 一份 <strong>SKILL.md</strong> + 腳本 + 參考資料</span></div>
-        <div class="point anim-up d4"><div class="ico ico--green">🤖</div><span>Agent 根據任務<strong>自動選擇</strong>要用哪個 Skill</span></div>
-        <div class="point anim-up d5"><div class="ico ico--amber">📝</div><span><strong>LESSONS.md</strong> — Agent 踩坑後自己記下來，下次不再犯</span></div>
-        <div class="card card--accent anim-up d7" style="margin-top: 12px;">
-          Skill 就像 <strong>SOP 文件</strong>——告訴 Agent「遇到這種任務，照這個流程做」。
-        </div>
+    <div>
+      <div class="point anim-up d3"><div class="ico ico--blue">📄</div><span>Skill = 一份 <strong>SKILL.md</strong> + 腳本 + 參考資料</span></div>
+      <div class="point anim-up d4"><div class="ico ico--green">🤖</div><span>Agent 根據任務<strong>自動選擇</strong>要用哪個 Skill</span></div>
+      <div class="point anim-up d5"><div class="ico ico--amber">📝</div><span><strong>LESSONS.md</strong> — Agent 踩坑後自己記下來，下次不再犯</span></div>
+      <div class="card card--accent anim-up d7" style="margin-top: 12px;">
+        Skill 就像 <strong>SOP 文件</strong>——告訴 Agent「遇到這種任務，照這個流程做」。
       </div>
     </div>
-    <img class="slide-illust float" src="assets/presentation/skills-toolbox.png" alt="">
   </div>
 </div>
 
