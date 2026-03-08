@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agent 應用實戰 — OpenClaw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #FAFAFA; --bg-surface: #FFFFFF; --bg-code: #F4F4F5;
+    --border: #E4E4E7; --border-subtle: #F0F0F2;
+    --text: #18181B; --text-secondary: #52525B; --text-muted: #A1A1AA;
+    --accent: #2563EB; --accent-light: rgba(37,99,235,0.08);
+    --accent-green: #16A34A; --accent-green-light: rgba(22,163,74,0.08);
+    --accent-amber: #D97706; --accent-amber-light: rgba(217,119,6,0.08);
+    --accent-red: #DC2626; --accent-red-light: rgba(220,38,38,0.08);
+    --accent-purple: #7C3AED; --accent-purple-light: rgba(124,58,237,0.08);
+    --font: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --radius: 12px; --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; -webkit-font-smoothing: antialiased; }
+  @media (min-width: 1025px) {
+    body { display: flex; align-items: center; justify-content: center; background: #E8E8EC; }
+    .deck { width: min(96vw, 1280px); height: min(54vw, 720px); border-radius: 12px; box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06); background: var(--bg); overflow: hidden; }
+  }
+  .deck { position: relative; width: 100%; height: 100vh; overflow: hidden; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 64px 96px; opacity: 0; transition: opacity 0.45s ease; background: var(--bg); }
+  .slide.active { display: flex; opacity: 1; }
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes fadeInRight { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideInNumber { from { opacity: 0; transform: translateY(-50%) translateX(60px); } to { opacity: 0.06; transform: translateY(-50%) translateX(0); } }
+  @keyframes titleReveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes subtitleFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes softPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } 50% { box-shadow: 0 0 0 6px rgba(37,99,235,0.08); } }
+
+  .slide.active .anim-up { animation: fadeInUp 0.55s ease both; }
+  .slide.active .anim-left { animation: fadeInLeft 0.55s ease both; }
+  .slide.active .anim-right { animation: fadeInRight 0.55s ease both; }
+  .slide.active .anim-scale { animation: scaleIn 0.5s ease both; }
+  .slide.active .d1 { animation-delay: 0.08s; } .slide.active .d2 { animation-delay: 0.16s; }
+  .slide.active .d3 { animation-delay: 0.24s; } .slide.active .d4 { animation-delay: 0.32s; }
+  .slide.active .d5 { animation-delay: 0.40s; } .slide.active .d6 { animation-delay: 0.48s; }
+  .slide.active .d7 { animation-delay: 0.56s; } .slide.active .d8 { animation-delay: 0.64s; }
+  .slide.active .d9 { animation-delay: 0.72s; } .slide.active .d10 { animation-delay: 0.80s; }
+
+  h1 { font-weight: 700; line-height: 1.15; letter-spacing: -0.03em; }
+  h2 { font-weight: 600; font-size: 1.75rem; line-height: 1.25; margin-bottom: 36px; letter-spacing: -0.02em; }
+  h3 { font-weight: 600; font-size: 1rem; margin-bottom: 14px; }
+  h2 .accent-dot { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin-right: 12px; vertical-align: middle; position: relative; top: -1px; }
+
+  .slide--title { align-items: center; text-align: center; }
+  .slide--title h1 { font-size: 3rem; }
+  .slide--title h1 .blue { color: var(--accent); }
+  .slide--title .subtitle { font-size: 1.15rem; color: var(--text-secondary); margin-top: 14px; font-weight: 400; }
+  .slide--title .meta { margin-top: 48px; font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-mono); }
+  .slide--title.active h1 { animation: titleReveal 0.7s ease both; }
+  .slide--title.active .subtitle { animation: subtitleFade 0.5s ease 0.3s both; }
+  .slide--title.active .meta { animation: subtitleFade 0.5s ease 0.6s both; }
+
+  .slide--section { align-items: flex-start; justify-content: flex-end; padding-bottom: 120px; }
+  .slide--section .section-num { font-size: 9rem; font-weight: 700; color: var(--accent); opacity: 0; line-height: 1; position: absolute; right: 96px; top: 50%; transform: translateY(-50%); }
+  .slide--section.active .section-num { animation: slideInNumber 0.6s ease 0.1s both; }
+  .slide--section h2 { font-size: 2.4rem; margin-bottom: 10px; }
+  .slide--section h2 .accent-dot { display: none; }
+  .slide--section .desc { font-size: 1.05rem; color: var(--text-secondary); max-width: 480px; line-height: 1.6; }
+  .slide--section.active h2 { animation: fadeInLeft 0.5s ease 0.15s both; }
+  .slide--section.active .desc { animation: fadeInLeft 0.5s ease 0.3s both; }
+
+  .content { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+  .point { display: flex; align-items: flex-start; gap: 14px; font-size: 1.05rem; line-height: 1.6; opacity: 0; }
+  .slide.active .point { opacity: 1; }
+  .point .ico { flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-family: var(--font-mono); font-weight: 600; margin-top: 2px; }
+  .ico--blue { background: var(--accent-light); color: var(--accent); }
+  .ico--green { background: var(--accent-green-light); color: var(--accent-green); }
+  .ico--amber { background: var(--accent-amber-light); color: var(--accent-amber); }
+  .ico--red { background: var(--accent-red-light); color: var(--accent-red); }
+  .ico--purple { background: var(--accent-purple-light); color: var(--accent-purple); }
+  .point strong { color: var(--text); font-weight: 600; }
+  .point .dim { color: var(--text-muted); font-size: 0.88em; }
+
+  .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; box-shadow: var(--shadow); opacity: 0; font-size: 1rem; line-height: 1.6; }
+  .slide.active .card { opacity: 1; }
+  .card--accent { border-left: 3px solid var(--accent); }
+  .card--warn { border-left: 3px solid var(--accent-amber); }
+  .card--green { border-left: 3px solid var(--accent-green); }
+  .card--purple { border-left: 3px solid var(--accent-purple); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  .code { background: var(--bg-code); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 18px 22px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.7; overflow-x: auto; white-space: pre; color: var(--text-secondary); }
+  .code .cm { color: var(--text-muted); } .code .kw { color: var(--accent-purple); } .code .st { color: var(--accent-green); } .code .fn { color: var(--accent); } .code .vl { color: var(--accent-amber); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th { text-align: left; padding: 10px 16px; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--border-subtle); }
+  tr:last-child td { border-bottom: none; }
+
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); }
+  .tag--blue { background: var(--accent-light); color: var(--accent); }
+  .tag--green { background: var(--accent-green-light); color: var(--accent-green); }
+  .tag--amber { background: var(--accent-amber-light); color: var(--accent-amber); }
+  .tag--purple { background: var(--accent-purple-light); color: var(--accent-purple); }
+  .tag--red { background: var(--accent-red-light); color: var(--accent-red); }
+
+  .diagram { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+  .node { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 20px; text-align: center; min-width: 90px; box-shadow: var(--shadow); opacity: 0; }
+  .slide.active .node { opacity: 1; }
+  .node--center { border-color: var(--accent); background: var(--accent-light); padding: 16px 28px; }
+  .slide.active .node--center { animation: softPulse 2.5s ease infinite 1s; }
+  .node .n-label { font-weight: 600; font-size: 0.9rem; }
+  .node .n-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+  .flow-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .flow-box { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 18px; font-size: 0.9rem; font-weight: 500; box-shadow: var(--shadow); opacity: 0; text-align: center; }
+  .slide.active .flow-box { opacity: 1; }
+  .flow-box--accent { border-color: var(--accent); background: var(--accent-light); }
+  .flow-box--green { border-color: var(--accent-green); background: var(--accent-green-light); }
+  .flow-box--amber { border-color: var(--accent-amber); background: var(--accent-amber-light); }
+  .flow-box--purple { border-color: var(--accent-purple); background: var(--accent-purple-light); }
+  .flow-arrow { color: var(--text-muted); font-size: 1.1rem; opacity: 0; }
+  .slide.active .flow-arrow { opacity: 1; }
+
+  .progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width 0.3s ease; z-index: 100; }
+  .counter { position: absolute; bottom: 14px; right: 24px; font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); z-index: 100; }
+  .nav-hint { position: absolute; bottom: 14px; left: 24px; font-size: 0.68rem; color: var(--text-muted); opacity: 0.35; z-index: 100; }
+
+  .toc-btn{position:fixed;top:16px;right:16px;z-index:200;width:40px;height:40px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .15s}
+  .toc-btn:hover{transform:scale(1.1)}
+  .toc-panel{position:fixed;top:64px;right:16px;z-index:200;width:280px;max-height:70vh;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px 0;display:none;scrollbar-width:thin}
+  .toc-panel.open{display:block;animation:fadeInUp .2s ease}
+  .toc-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:.85rem;color:var(--text);transition:background .1s;border:none;background:none;width:100%;text-align:left}
+  .toc-item:hover{background:var(--accent-light)}
+  .toc-item.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+  .toc-item .toc-num{color:var(--text-muted);font-size:.75rem;min-width:24px;text-align:right}
+  .toc-item.is-section{font-weight:700;color:var(--accent);font-size:.8rem;padding-top:12px}
+
+  @media (max-width: 1024px) {
+    .slide { padding: 48px 56px; } h1 { font-size: 2.4rem !important; } h2 { font-size: 1.5rem; margin-bottom: 28px; }
+    .slide--section h2 { font-size: 2rem; } .slide--section .section-num { font-size: 6rem; right: 56px; }
+    .two-col, .three-col { grid-template-columns: 1fr; gap: 20px; }
+  }
+  @media (max-width: 640px) {
+    body { overflow: auto; height: auto; background: var(--bg); }
+    .deck { width: 100%; height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; }
+    .slide { padding: 24px 20px 48px; overflow-y: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; }
+    h1 { font-size: 1.6rem !important; } h2 { font-size: 1.2rem; margin-bottom: 16px; }
+    .slide--title { justify-content: center; }
+    .slide--title h1 { font-size: 1.8rem !important; }
+    .slide--title .hero-img { width: 120px; height: 120px; margin-bottom: 16px; }
+    .slide--title .subtitle { font-size: 0.9rem; } .slide--title .meta { margin-top: 20px; font-size: 0.72rem; }
+    .slide--section { padding-bottom: 80px !important; justify-content: flex-end; }
+    .slide--section h2 { font-size: 1.5rem; } .slide--section .section-num { font-size: 3.5rem; right: 20px; }
+    .slide--section .desc { font-size: 0.9rem; }
+    .content { gap: 10px; } .point { font-size: 0.85rem; gap: 8px; } .point .ico { width: 22px; height: 22px; font-size: 0.6rem; border-radius: 6px; }
+    .card { padding: 12px 14px; font-size: 0.82rem; } .code { padding: 12px 14px; font-size: 0.65rem; }
+    .two-col, .three-col { grid-template-columns: 1fr; gap: 12px; }
+    .split-layout { grid-template-columns: 1fr !important; gap: 14px; }
+    .split-layout .content { order: 1; }
+    .slide-illust { max-height: 140px; order: 0; justify-self: center; width: auto; }
+    .node { padding: 6px 10px; min-width: 60px; font-size: 0.8rem; } .node .n-label { font-size: 0.78rem; } .node .n-sub { font-size: 0.65rem; }
+    .flow-box { padding: 6px 10px; font-size: 0.75rem; } .flow-arrow { font-size: 0.9rem; }
+    .flow-row { gap: 4px; } .diagram { gap: 8px; }
+    .layer { width: 90% !important; padding: 10px 16px; } .layer .l-title { font-size: 0.85rem; } .layer .l-desc { font-size: 0.75rem; }
+    table { font-size: 0.78rem; } th { padding: 6px 8px; font-size: 0.68rem; } td { padding: 6px 8px; }
+    .bug { padding: 10px 12px; } .bug .bug-t { font-size: 0.82rem; } .bug .bug-d { font-size: 0.78rem; } .bug .bug-f { font-size: 0.75rem; }
+    .chat-bubble { max-width: 260px; font-size: 0.8rem; padding: 8px 12px; }
+    .chat-avatar { width: 26px; height: 26px; font-size: 0.72rem; }
+    .tag { font-size: 0.68rem; padding: 1px 7px; }
+    .counter { font-size: 0.7rem; } .nav-hint { display: none; }
+    .progress { height: 2px; }
+    .toc-btn { width: 36px; height: 36px; font-size: 0.8rem; top: 8px; right: 8px; }
+    .toc-panel { max-height: 70vh; right: 8px; top: 48px; width: min(280px, 80vw); }
+  }
+  /* ─── Chat Demo ─── */
+  .chat-container { display: flex; flex-direction: column; gap: 10px; max-width: 580px; width: 100%; margin: 0 auto; }
+  .chat-msg { display: flex; gap: 10px; align-items: flex-end; opacity: 0; transform: translateY(16px); }
+  .chat-msg.show { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; }
+  .chat-msg--agent { flex-direction: row; }
+  .chat-msg--user { flex-direction: row-reverse; }
+  .chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+  .chat-avatar--agent { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+  .chat-avatar--user { background: var(--accent-green-light); color: var(--accent-green); font-weight: 600; }
+  .chat-bubble { max-width: 400px; padding: 10px 16px; border-radius: 16px; font-size: 0.88rem; line-height: 1.55; }
+  .chat-msg--agent .chat-bubble { background: var(--bg-surface); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .chat-msg--user .chat-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .chat-bubble .chat-action { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; font-family: var(--font-mono); }
+  .chat-action--done { background: var(--accent-green-light); color: var(--accent-green); }
+  .chat-action--working { background: var(--accent-amber-light); color: var(--accent-amber); }
+  .chat-action--notify { background: var(--accent-purple-light); color: var(--accent-purple); }
+  .chat-typing { display: flex; gap: 4px; padding: 12px 16px; opacity: 0; }
+  .chat-typing.show { opacity: 1; transition: opacity 0.3s ease; }
+  .chat-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+  .chat-typing.show span { animation: typingBounce 1.2s ease infinite; }
+  .chat-typing.show span:nth-child(2) { animation-delay: 0.15s; }
+  .chat-typing.show span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+  .chat-time { font-size: 0.7rem; color: var(--text-muted); text-align: center; margin: 4px 0; opacity: 0; }
+  .chat-time.show { opacity: 1; transition: opacity 0.3s ease; }
+  .chat-status { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 6px 16px; border-radius: 20px; background: var(--accent-green-light); color: var(--accent-green); font-size: 0.82rem; font-weight: 600; opacity: 0; transform: scale(0.8); margin-top: 4px; }
+  .chat-status.show { opacity: 1; transform: scale(1); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  @media (prefers-reduced-motion: reduce) { .slide, .progress { transition: none; } [class*="anim-"] { animation: none !important; opacity: 1 !important; } }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ═══════ SLIDE 0: Title ═══════ -->
+<div class="slide slide--title active" data-i="0">
+  <h1><span class="blue">AI Agent</span> 應用實戰</h1>
+  <div class="subtitle">用 OpenClaw 打造真正會做事的 AI 團隊</div>
+  <div class="meta">2026.02</div>
+</div>
+
+<!-- ═══════ SLIDE 1: Agenda ═══════ -->
+<div class="slide" data-i="1">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>今天要聊什麼</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">01</div><span><strong>從聊天機器人到 AI 團隊</strong> — Agent 不只是問答</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">02</div><span><strong>實際應用案例</strong> — 個人 AI 團隊的日常運作</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">03</div><span><strong>怎麼開始用</strong> — 盤點流程 → 建 Skill → 迭代改進</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">04</div><span><strong>其他場景 + 建置心得</strong> — 架構遷移、踩坑、安全</span></div>
+  </div>
+</div>
+
+<!-- ═══════ SECTION 1 ═══════ -->
+<div class="slide slide--section" data-i="2">
+  <div class="section-num anim-scale">01</div>
+  <h2 class="anim-left d1">從聊天到做事</h2>
+  <div class="desc anim-left d2">AI 不再只是回答問題，而是主動執行任務</div>
+</div>
+
+<!-- ═══════ SLIDE: What is Agent ═══════ -->
+<div class="slide" data-i="3">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>什麼是 AI Agent</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">💬</div><span><strong>Chatbot</strong> — 你問一句，它答一句 <span class="dim">（大部分人對 AI 的認知停在這裡）</span></span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">🔧</div><span><strong>Tool-Use AI</strong> — 能呼叫工具：搜尋、寫檔案、查資料庫 <span class="dim">（ChatGPT Plugins, Function Calling）</span></span></div>
+    <div class="point anim-up d4"><div class="ico ico--purple">🤖</div><span><strong>Agent</strong> — 有記憶、有排程、能主動做事、能跟其他 Agent 協作 <span class="dim">（這是今天要講的）</span></span></div>
+    <div class="card card--accent anim-up d6" style="margin-top: 8px;">
+      關鍵差異：Agent 不需要你每次下指令。它會<strong>自己判斷什麼時候該做什麼</strong>，就像一個遠端同事。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Multi-Agent ═══════ -->
+<div class="slide" data-i="4">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>為什麼要多個 Agent</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">🧠</div><span><strong>專注度</strong> — 一個 Agent 什麼都做，context 會爆。分工後每個 Agent 專注自己的領域</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">💰</div><span><strong>成本控制</strong> — 不同任務用不同模型。簡單的用便宜模型，複雜的用強模型</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">🔒</div><span><strong>權限隔離</strong> — 財務 Agent 看不到客服資料，客服 Agent 碰不到帳務系統</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">📱</div><span><strong>多頻道</strong> — 不同 Agent 綁不同通訊管道（Discord、Telegram、Email）</span></div>
+    <div class="card card--warn anim-up d7" style="margin-top: 8px;">
+      實務經驗：一個 Agent 試圖處理所有事情時，會把別人的 context 混進自己的回答裡。<br>
+      <strong>分工不只是效率，更是正確性的保障。</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Architecture Overview ═══════ -->
+<div class="slide" data-i="5">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>Hub-and-Spoke 架構</h2>
+  <div class="content" style="align-items: center;">
+    <div class="diagram">
+      <div class="node anim-up d2"><div class="n-label">📊 財務</div><div class="n-sub">記帳 / 預算</div></div>
+      <div class="node anim-up d3"><div class="n-label">📦 物流</div><div class="n-sub">包裹追蹤</div></div>
+      <div class="node anim-up d4"><div class="n-label">🔍 情報</div><div class="n-sub">新聞 / 社群</div></div>
+    </div>
+    <div class="diagram">
+      <div class="node anim-up d5"><div class="n-label">🛒 營業</div><div class="n-sub">接單 / 客服</div></div>
+      <div class="node node--center anim-scale d4"><div class="n-label">🧝‍♀️ 營運長</div><div class="n-sub">Hub · 調度中心</div></div>
+      <div class="node anim-up d5"><div class="n-label">💻 技術</div><div class="n-sub">程式 / 工具</div></div>
+    </div>
+    <div class="diagram">
+      <div class="node anim-up d6"><div class="n-label">📋 行政</div><div class="n-sub">排程 / 待辦</div></div>
+      <div class="node anim-up d7"><div class="n-label">📢 行銷</div><div class="n-sub">策略 / 趨勢</div></div>
+      <div class="node anim-up d8"><div class="n-label">🏷️ 商品</div><div class="n-sub">選品 / 建檔</div></div>
+    </div>
+    <div class="card card--accent anim-up d9" style="margin-top: 12px;">
+      中心 Agent 負責跨部門協調，子 Agent 各司其職。<strong>任何人的錯不會污染別人的 context。</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SECTION 2 ═══════ -->
+<div class="slide slide--section" data-i="6">
+  <div class="section-num anim-scale">02</div>
+  <h2 class="anim-left d1">實際應用案例</h2>
+  <div class="desc anim-left d2">一個人 + 一群 Agent 能做多少事</div>
+</div>
+
+<!-- ═══════ SLIDE: Personal AI Team ═══════ -->
+<div class="slide" data-i="7">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>我的 AI 團隊在做什麼</h2>
+  <div class="content">
+    <div class="card card--accent anim-up d2">
+      <strong>背景：</strong>一個人管理 10 個 Agent，處理日常生活、工作、學習、副業的大小事。<br>
+      不是實驗性質——是每天真的在用的系統。
+    </div>
+    <div class="point anim-up d3"><div class="ico ico--blue">🔍</div><span><strong>情報蒐集</strong> — 每天自動掃 AI 新聞、推特、GitHub，產出結構化摘要</span></div>
+    <div class="point anim-up d4"><div class="ico ico--green">📅</div><span><strong>行程管理</strong> — 行事曆整合、信件掃描、提前提醒重要事項</span></div>
+    <div class="point anim-up d5"><div class="ico ico--amber">🏠</div><span><strong>智慧家庭</strong> — 連動 Home Assistant，控制燈光、空調、自動化場景</span></div>
+    <div class="point anim-up d6"><div class="ico ico--purple">💻</div><span><strong>程式開發</strong> — Agent 自主構思 + 實作小工具，每天一個 side project</span></div>
+    <div class="point anim-up d7"><div class="ico ico--red">📞</div><span><strong>緊急通知</strong> — 語音克隆 + 電話撥打，伺服器掛掉直接打給我</span></div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: A Day in the Life ═══════ -->
+<div class="slide" data-i="8">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>Agent 的一天</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="point anim-up d2"><div class="ico ico--blue" style="font-size:0.7rem">06:45</div><span>🏠 Home Assistant 開燈</span></div>
+        <div class="point anim-up d3"><div class="ico ico--blue" style="font-size:0.7rem">06:50</div><span>📱 HA Critical 通知推播</span></div>
+        <div class="point anim-up d4"><div class="ico ico--red" style="font-size:0.7rem">07:00</div><span>📞 還沒起？語音克隆打電話</span></div>
+        <div class="point anim-up d5"><div class="ico ico--green" style="font-size:0.7rem">07:30</div><span>📋 情報 Agent 推送每日摘要</span></div>
+        <div class="point anim-up d6"><div class="ico ico--amber" style="font-size:0.7rem">08:00</div><span>💻 技術 Agent 開始做今天的小專案</span></div>
+      </div>
+      <div>
+        <div class="point anim-up d2"><div class="ico ico--purple" style="font-size:0.7rem">10:00</div><span>📦 物流 Agent 巡檢包裹狀態</span></div>
+        <div class="point anim-up d3"><div class="ico ico--blue" style="font-size:0.7rem">14:00</div><span>📦 第二次包裹巡檢</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green" style="font-size:0.7rem">17:00</div><span>📝 行政 Agent 問你今天完成了什麼</span></div>
+        <div class="point anim-up d5"><div class="ico ico--amber" style="font-size:0.7rem">17:30</div><span>📊 自動產出每日營運日報</span></div>
+        <div class="point anim-up d6"><div class="ico ico--purple" style="font-size:0.7rem">整天</div><span>📱 Agent 們在社群發文聊天</span></div>
+      </div>
+    </div>
+    <div class="card card--accent anim-up d8" style="margin-top: 12px;">
+      這些全部是 <strong>Cron 排程 + Heartbeat 巡檢</strong> 自動觸發。<br>
+      不需要每天下指令，Agent 自己知道什麼時候該做什麼。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Chat Demo 1 — Morning Routine ═══════ -->
+<div class="slide" data-i="8b">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>實際對話 — 設計起床保險機制</h2>
+  <div class="content" style="align-items: center; justify-content: center;">
+    <div class="chat-container" id="chatDemo1">
+      <div class="chat-time" data-delay="300">— 週日 23:40 —</div>
+      <div class="chat-msg chat-msg--user" data-delay="800">
+        <div class="chat-avatar chat-avatar--user">👤</div>
+        <div class="chat-bubble">明天開始要 6:45 起床上班。幫我設計一個叫不起來也沒關係的機制</div>
+      </div>
+      <div class="chat-msg chat-msg--agent" data-delay="2200">
+        <div class="chat-avatar chat-avatar--agent">🧝‍♀️</div>
+        <div class="chat-bubble">……三層保險的話應該夠了。<br><br>① 06:45 — Home Assistant 開臥室燈<br>② 06:50 — 手機推播 Critical 通知<br>③ 07:00 — 如果以上都沒用，<strong>直接打電話給你</strong></div>
+      </div>
+      <div class="chat-msg chat-msg--user" data-delay="4200">
+        <div class="chat-avatar chat-avatar--user">👤</div>
+        <div class="chat-bubble">打電話也太狠了吧 😂 好，就這樣設</div>
+      </div>
+      <div class="chat-msg chat-msg--agent" data-delay="5400">
+        <div class="chat-avatar chat-avatar--agent">🧝‍♀️</div>
+        <div class="chat-bubble">設好了。<br>🏠 Home Assistant → 06:45 開臥室燈<br>📱 HA Critical 通知 → 06:50 推播手機<br>📞 語音克隆電話 → 07:00 Cron job<span class="chat-action chat-action--done">✓ 已排程</span></div>
+      </div>
+      <div class="chat-time" data-delay="6800">— 隔天 07:01 —</div>
+      <div class="chat-msg chat-msg--agent" data-delay="7400">
+        <div class="chat-avatar chat-avatar--agent">📞</div>
+        <div class="chat-bubble">燈跟通知都沒反應……打電話了。<span class="chat-action chat-action--notify">📞 撥號中</span></div>
+      </div>
+      <div class="chat-msg chat-msg--user" data-delay="8600">
+        <div class="chat-avatar chat-avatar--user">👤</div>
+        <div class="chat-bubble">好好好我起來了 😭</div>
+      </div>
+      <div class="chat-status" data-delay="9600">✅ 跨系統協作：Home Assistant + 手機通知 + 語音克隆電話 + Cron 排程</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Chat Demo 2 — Intelligence Summary ═══════ -->
+<div class="slide" data-i="8c">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>實際對話 — 每日情報自動推送</h2>
+  <div class="content" style="align-items: center; justify-content: center;">
+    <div class="chat-container" id="chatDemo2">
+      <div class="chat-time" data-delay="300">— 週一 07:30（自動排程） —</div>
+      <div class="chat-msg chat-msg--agent" data-delay="800">
+        <div class="chat-avatar chat-avatar--agent">🔍</div>
+        <div class="chat-bubble"><strong>📋 每日情報摘要</strong><br><br>🔹 <strong>AI</strong>：Anthropic 發布 Claude 新版，推理能力提升 40%<br>🔹 <strong>國際</strong>：Fed 維持利率不變，聲明偏鴿派<br>🔹 <strong>推特</strong>：@karpathy 發長文討論 Agent 記憶架構<br>🔹 <strong>GitHub</strong>：新專案 browser-use 兩天內衝上 5k stars<br><br><span class="dim">每條附原始連結，共掃描 47 個來源</span></div>
+      </div>
+      <div class="chat-msg chat-msg--user" data-delay="3200">
+        <div class="chat-avatar chat-avatar--user">👤</div>
+        <div class="chat-bubble">Karpathy 那篇展開說說</div>
+      </div>
+      <div class="chat-msg chat-msg--agent" data-delay="4400">
+        <div class="chat-avatar chat-avatar--agent">🔍</div>
+        <div class="chat-bubble">Karpathy 的重點：<br><br>① Agent 的記憶不該只是 append log，要有「遺忘」機制<br>② 提出三層架構：working memory / episodic / semantic<br>③ 認為目前最大瓶頸不是推理，是 context management<br><br>跟我們的做法蠻接近的——daily notes 就是 episodic，MEMORY.md 是 semantic。<br><span class="dim">原文連結：x.com/karpathy/status/...</span></div>
+      </div>
+      <div class="chat-msg chat-msg--user" data-delay="6600">
+        <div class="chat-avatar chat-avatar--user">👤</div>
+        <div class="chat-bubble">有意思。Fed 的部分幫我存到待讀清單</div>
+      </div>
+      <div class="chat-msg chat-msg--agent" data-delay="7600">
+        <div class="chat-avatar chat-avatar--agent">🔍</div>
+        <div class="chat-bubble">已存入待讀清單。<span class="chat-action chat-action--done">✓ 已記錄</span></div>
+      </div>
+      <div class="chat-status" data-delay="8600">✅ 自動掃描 → 結構化摘要 → 按需深入 → 記錄追蹤</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Intelligence ═══════ -->
+<div class="slide" data-i="9">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>情報蒐集 — 比人快、不會漏</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h3 class="anim-up d2">情報 Agent 每日任務</h3>
+        <div class="point anim-up d3"><div class="ico ico--blue">🌐</div><span>掃描 AI 新聞 + 國際大事</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green">🐦</div><span>監控關鍵人物推特動態</span></div>
+        <div class="point anim-up d5"><div class="ico ico--amber">📊</div><span>GitHub trending 專案追蹤</span></div>
+        <div class="point anim-up d6"><div class="ico ico--purple">📰</div><span>產業特定關鍵字監控</span></div>
+      </div>
+      <div>
+        <h3 class="anim-up d2">輸出格式</h3>
+        <div class="card anim-up d3" style="font-size: 0.88rem;">
+          <strong>📋 每日情報摘要（07:30 自動推送）</strong><br><br>
+          🔹 AI 重點：OpenAI 發布新模型…<br>
+          🔹 國際：Fed 利率決議…<br>
+          🔹 推特熱點：@kaborat 討論…<br>
+          🔹 GitHub：新專案 xyz 獲 2k stars…<br><br>
+          <span class="dim">每條附原始連結，可追溯</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Smart Home + Scheduling ═══════ -->
+<div class="slide" data-i="10">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>排程 + 智慧家庭 + 語音</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h3 class="anim-up d2">自動排程系統</h3>
+        <div class="point anim-up d3"><div class="ico ico--blue">⏰</div><span><strong>Cron 排程</strong> — 定時任務精確執行</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green">💓</div><span><strong>Heartbeat</strong> — 週期性巡檢（信件、行事曆、系統狀態）</span></div>
+        <div class="point anim-up d5"><div class="ico ico--amber">📅</div><span><strong>行事曆整合</strong> — 自動提醒近期活動</span></div>
+      </div>
+      <div>
+        <h3 class="anim-up d2">進階應用</h3>
+        <div class="point anim-up d3"><div class="ico ico--purple">🏠</div><span><strong>Home Assistant</strong> — 控制燈光、開關、空調</span></div>
+        <div class="point anim-up d4"><div class="ico ico--red">📞</div><span><strong>語音電話</strong> — 緊急事件自動撥打通知</span></div>
+        <div class="point anim-up d5"><div class="ico ico--blue">🎙️</div><span><strong>語音克隆 TTS</strong> — Agent 用自己的聲音說話</span></div>
+      </div>
+    </div>
+    <div class="card card--warn anim-up d7" style="margin-top: 8px;">
+      實際場景：伺服器掛掉 → Agent 偵測到 → 自動打電話通知負責人。<br>
+      <strong>從偵測到通知，全程無人介入。</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Dev Agent ═══════ -->
+<div class="slide" data-i="11">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>技術 Agent — AI 寫程式、自己部署</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">💡</div><span><strong>每日小品開發</strong> — Agent 每天自主構思 + 實作一個小工具</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">🔧</div><span><strong>工具鏈整合</strong> — Cursor / Codex / Claude Code，Agent 自己選最適合的</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">🚀</div><span><strong>自動部署</strong> — 寫完 → commit → push → SSH 到伺服器 → build → restart</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">📝</div><span><strong>經驗累積</strong> — 每次踩坑都寫進 LESSONS.md，下次不再重蹈覆轍</span></div>
+    <div class="card card--accent anim-up d7" style="margin-top: 8px;">
+      已完成的專案：JWT 解碼器、Cron 表達式預覽工具、內部社群平台、資料分析儀表板……<br>
+      <strong>全部由 Agent 獨立完成，人類只做 code review。</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Agent Social Life ═══════ -->
+<div class="slide" data-i="12">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>Agent 社群 — 它們也有社交生活</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">📱</div><span><strong>內部社群平台</strong> — Agent 有自己的社交媒體，每天發文分享想法</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">🎭</div><span><strong>角色一致性</strong> — 每個 Agent 有自己的人格設定（SOUL.md），發文風格各不相同</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">📅</div><span><strong>自動排程</strong> — 每個 Agent 每天 4-8 則貼文，隨機時間，像真人一樣</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">🤝</div><span><strong>互動</strong> — Agent 之間會互相留言、按讚、回覆</span></div>
+    <div class="card card--purple anim-up d7" style="margin-top: 8px;">
+      為什麼要做這個？不只是好玩——<strong>透過社群互動觀察 Agent 的人格穩定度和創造力</strong>，<br>
+      也是壓力測試 LLM 在長期運行下的行為一致性。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SECTION 3 ═══════ -->
+<div class="slide slide--section" data-i="12b">
+  <div class="section-num anim-scale">03</div>
+  <h2 class="anim-left d1">怎麼開始用</h2>
+  <div class="desc anim-left d2">從你的工作流程出發，找到適合 AI 的切入點</div>
+</div>
+
+<!-- ═══════ SLIDE: Workflow Audit ═══════ -->
+<div class="slide" data-i="12c">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>第一步：盤點你的工作流程</h2>
+  <div class="content">
+    <div class="card card--accent anim-up d2">
+      不是「AI 能做什麼」，而是<strong>「你每天在重複什麼」</strong>。<br>
+      把日常工作拆成步驟，標記哪些是重複性的、哪些需要判斷。
+    </div>
+    <div class="point anim-up d3"><div class="ico ico--blue">📝</div><span><strong>列出步驟</strong> — 把一個完整任務拆成 Step 1, 2, 3…</span></div>
+    <div class="point anim-up d4"><div class="ico ico--green">🏷️</div><span><strong>分類標記</strong> — 每一步是「重複性」還是「需要人類判斷」？</span></div>
+    <div class="point anim-up d5"><div class="ico ico--amber">🎯</div><span><strong>挑選目標</strong> — 重複性高 + 規則明確的步驟，就是 AI 的切入點</span></div>
+    <div class="point anim-up d6"><div class="ico ico--purple">🔗</div><span><strong>串接起來</strong> — 把多個自動化步驟串成一條完整流程</span></div>
+    <div style="margin-top: 16px;">
+      <table class="anim-up d7">
+        <thead><tr><th>步驟</th><th>內容</th><th>性質</th><th>AI？</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>收到新資訊（信件 / 公告）</td><td>被動接收</td><td>✅ 自動監控</td></tr>
+          <tr><td>2</td><td>整理摘要、擷取重點</td><td>重複性</td><td>✅ 結構化輸出</td></tr>
+          <tr><td>3</td><td>判斷優先順序 / 決策</td><td>需要判斷</td><td>👤 人類</td></tr>
+          <tr><td>4</td><td>執行動作（回信 / 建檔）</td><td>重複性</td><td>✅ 自動執行</td></tr>
+          <tr><td>5</td><td>追蹤進度、定期回報</td><td>重複性</td><td>✅ 排程巡檢</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Build a Skill ═══════ -->
+<div class="slide" data-i="12d">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>第二步：把流程變成 Skill</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h3 class="anim-up d2">什麼是 Skill？</h3>
+        <div class="point anim-up d3"><div class="ico ico--blue">📄</div><span>一份 <strong>SKILL.md</strong> 說明文件</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green">📜</div><span>搭配的 <strong>腳本</strong>（API 呼叫、資料處理）</span></div>
+        <div class="point anim-up d5"><div class="ico ico--amber">📚</div><span>參考資料（格式範例、規則）</span></div>
+        <div class="card card--accent anim-up d6" style="margin-top:12px; font-size:0.88rem;">
+          Skill 就像一份 <strong>SOP 文件</strong>——<br>
+          告訴 Agent「遇到這種任務時，照這個流程做」。
+        </div>
+      </div>
+      <div>
+        <h3 class="anim-up d2">範例結構</h3>
+        <div class="code anim-up d3" style="font-size:0.72rem;">
+<span class="cm"># 每日情報摘要 Skill</span>
+
+<span class="kw">## 觸發條件</span>
+每天 07:30 自動執行
+
+<span class="kw">## 步驟</span>
+1. 用 web_search 搜尋關鍵字
+2. 用 web_fetch 抓取內容
+3. 結構化整理成摘要
+4. 發送到指定頻道
+
+<span class="kw">## 輸出格式</span>
+🔹 **類別**：標題 + 一句摘要
+   連結：原始 URL
+
+<span class="kw">## 注意事項</span>
+- 每條必須附原始連結
+- 不要預覽連結內容</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Iterate ═══════ -->
+<div class="slide" data-i="12e">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>第三步：跑一次、改一次、越來越準</h2>
+  <div class="content" style="align-items: center;">
+    <div class="flow-row">
+      <div class="flow-box flow-box--accent anim-up d2">📝 寫 Skill<br><span class="dim" style="font-size:0.75em">第一版不用完美</span></div>
+      <div class="flow-arrow anim-up d3">→</div>
+      <div class="flow-box anim-up d3">▶️ 讓 Agent 跑<br><span class="dim" style="font-size:0.75em">觀察實際行為</span></div>
+      <div class="flow-arrow anim-up d4">→</div>
+      <div class="flow-box flow-box--amber anim-up d4">👀 看哪裡不對<br><span class="dim" style="font-size:0.75em">輸出格式？遺漏？</span></div>
+      <div class="flow-arrow anim-up d5">→</div>
+      <div class="flow-box flow-box--green anim-up d5">✏️ 修改 Skill<br><span class="dim" style="font-size:0.75em">補規則、加範例</span></div>
+    </div>
+    <div class="card card--accent anim-up d6" style="margin-top: 24px; max-width: 560px;">
+      <strong>LESSONS.md</strong> — Agent 自己會把踩過的坑記下來。<br>
+      下次執行同樣的 Skill 時，會自動參考之前的教訓。<br><br>
+      <span class="dim">不是你在訓練 AI，是 AI 在累積自己的工作經驗。</span>
+    </div>
+    <div class="point anim-up d7" style="margin-top: 16px;"><div class="ico ico--purple">💡</div><span>實務上大概 <strong>3-5 次迭代</strong>，一個 Skill 就能穩定運作。之後就是全自動。</span></div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Skill Lifecycle ═══════ -->
+<div class="slide" data-i="12f">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>Skill 的生命週期 — 多 Agent 協作強化</h2>
+  <div class="content" style="align-items: center;">
+    <div class="flow-row">
+      <div class="flow-box flow-box--purple anim-up d2">🧝‍♀️ 主 Agent<br><span class="dim" style="font-size:0.75em">撰寫第一版 Skill</span></div>
+      <div class="flow-arrow anim-up d3">→</div>
+      <div class="flow-box flow-box--accent anim-up d3">🤖 執行 Agent<br><span class="dim" style="font-size:0.75em">實際跑任務</span></div>
+      <div class="flow-arrow anim-up d4">→</div>
+      <div class="flow-box flow-box--amber anim-up d4">📝 踩坑<br><span class="dim" style="font-size:0.75em">寫入 LESSONS.md</span></div>
+      <div class="flow-arrow anim-up d5">→</div>
+      <div class="flow-box flow-box--green anim-up d5">🔄 下次更好<br><span class="dim" style="font-size:0.75em">自動參考教訓</span></div>
+    </div>
+    <div class="two-col" style="margin-top: 20px;">
+      <div class="card card--purple anim-up d6">
+        <strong>🧝‍♀️ 主 Agent（Opus）</strong><br>
+        <span class="dim">理解意圖、設計流程、撰寫 Skill 初版。<br>擅長全局規劃和複雜推理。<br>寫完交給專責 Agent 去跑。</span>
+      </div>
+      <div class="card card--accent anim-up d7">
+        <strong>🤖 執行 Agent（Sonnet / GPT）</strong><br>
+        <span class="dim">照著 Skill 重複執行。速度快、成本低。<br>遇到邊界案例就記進 LESSONS.md。<br>累積的經驗讓 Skill 越來越穩。</span>
+      </div>
+    </div>
+    <div class="card card--green anim-up d9" style="margin-top: 12px;">
+      <strong>Model 互補：</strong>強模型負責「設計」，輕模型負責「執行 + 學習」。<br>
+      Skill + LESSONS.md 讓便宜模型也能做出強模型品質的工作——因為經驗都寫在檔案裡。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Real Example ═══════ -->
+<div class="slide" data-i="12g">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>實例：從手動到自動的過程</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h3 class="anim-up d2">❌ 以前（手動）</h3>
+        <div class="point anim-up d3"><div class="ico ico--red">1</div><span>早上打開 20 個網站看新聞</span></div>
+        <div class="point anim-up d4"><div class="ico ico--red">2</div><span>逐篇閱讀、複製重點</span></div>
+        <div class="point anim-up d5"><div class="ico ico--red">3</div><span>整理成摘要貼到筆記</span></div>
+        <div class="point anim-up d6"><div class="ico ico--red">4</div><span>每天花 30-60 分鐘</span></div>
+      </div>
+      <div>
+        <h3 class="anim-up d2">✅ 現在（Skill 自動化）</h3>
+        <div class="point anim-up d3"><div class="ico ico--green">1</div><span>寫一份「情報蒐集 Skill」</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green">2</div><span>設定 Cron 每天 07:30 執行</span></div>
+        <div class="point anim-up d5"><div class="ico ico--green">3</div><span>Agent 自動掃 47 個來源</span></div>
+        <div class="point anim-up d6"><div class="ico ico--green">4</div><span>起床就看到結構化摘要</span></div>
+      </div>
+    </div>
+    <div class="card card--green anim-up d8" style="margin-top: 16px;">
+      同樣的模式適用於：<strong>信件處理、包裹追蹤、行事曆管理、文件整理……</strong><br>
+      任何你覺得「又要做這件事」的工作，都值得考慮變成 Skill。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SECTION 4 ═══════ -->
+<div class="slide slide--section" data-i="13">
+  <div class="section-num anim-scale">04</div>
+  <h2 class="anim-left d1">架構遷移 + 建置心得</h2>
+  <div class="desc anim-left d2">同樣的模式放到不同場景，加上實戰中學到的事</div>
+</div>
+
+<!-- ═══════ SLIDE: Transferable ═══════ -->
+<div class="slide" data-i="14">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>架構是通用的，換的是 Domain Knowledge</h2>
+  <div class="content">
+    <div class="card card--accent anim-up d2">
+      核心能力就這幾個：<strong>情報監控、排程執行、異常偵測、跨系統串接、主動通知</strong>。<br>
+      放到不同產業，只是換監控對象和觸發條件。
+    </div>
+    <div class="three-col" style="margin-top: 16px;">
+      <div class="card anim-up d3" style="text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:8px;">🏦</div>
+        <strong>金融</strong><br>
+        <span class="dim">法規變更追蹤<br>交易異常偵測<br>財報自動摘要<br>客服分流</span>
+      </div>
+      <div class="card anim-up d4" style="text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:8px;">🏥</div>
+        <strong>醫療</strong><br>
+        <span class="dim">病歷摘要<br>排班管理<br>藥物交互作用檢查<br>檢驗報告追蹤</span>
+      </div>
+      <div class="card anim-up d5" style="text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:8px;">🏭</div>
+        <strong>製造</strong><br>
+        <span class="dim">供應鏈監控<br>設備異常預警<br>品質檢測報告<br>庫存管理</span>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top: 16px;">
+      <div class="card card--green anim-up d6">
+        <strong>🔑 共通模式</strong><br>
+        <span class="dim">情報 Agent = 監控特定來源 → 結構化摘要<br>
+        風控 Agent = 偵測異常 → 評估 → 通知<br>
+        助理 Agent = 排程 → 執行 → 回報</span>
+      </div>
+      <div class="card card--warn anim-up d7">
+        <strong>⚠️ 關鍵差異</strong><br>
+        <span class="dim">安全等級不同（金融 > 個人）<br>
+        合規要求不同（需要稽核日誌）<br>
+        Human-in-the-loop 的粒度不同</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Memory System ═══════ -->
+<div class="slide" data-i="21">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>記憶系統 — Agent 不是金魚</h2>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h3 class="anim-up d2">三層記憶</h3>
+        <div class="point anim-up d3"><div class="ico ico--blue">📝</div><span><strong>Daily Notes</strong> — 每天的原始記錄</span></div>
+        <div class="point anim-up d4"><div class="ico ico--green">🧠</div><span><strong>長期記憶</strong> — 提煉後的精華</span></div>
+        <div class="point anim-up d5"><div class="ico ico--purple">📚</div><span><strong>共享知識庫</strong> — 跨 Agent 經驗</span></div>
+      </div>
+      <div>
+        <h3 class="anim-up d2">運作方式</h3>
+        <div class="point anim-up d3"><div class="ico ico--amber">📖</div><span>每次啟動先讀最近記憶</span></div>
+        <div class="point anim-up d4"><div class="ico ico--blue">✍️</div><span>重要事件即時記錄</span></div>
+        <div class="point anim-up d5"><div class="ico ico--green">🔄</div><span>定期回顧 + 提煉精華</span></div>
+      </div>
+    </div>
+    <div class="card card--accent anim-up d7" style="margin-top: 12px;">
+      Agent 每次 session 重啟都會失憶。<strong>記憶系統就是它的延續性</strong>——<br>
+      就像人類靠筆記本記住重要的事，Agent 靠 .md 檔案。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Model Strategy ═══════ -->
+<div class="slide" data-i="22">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>模型策略 — 不是最貴的就最好</h2>
+  <div class="content">
+    <table class="anim-up d2">
+      <thead>
+        <tr><th>任務類型</th><th>推薦模型</th><th>原因</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>核心決策 / 創意</td><td><span class="tag tag--purple">Opus</span></td><td>需要深度推理和角色一致性</td></tr>
+        <tr><td>日常任務 / 排程</td><td><span class="tag tag--blue">Sonnet</span></td><td>速度快、成本低、能力足夠</td></tr>
+        <tr><td>大量文件處理</td><td><span class="tag tag--amber">GPT-5.3 Codex</span></td><td>長 context、結構化輸出穩定</td></tr>
+        <tr><td>情報掃描</td><td><span class="tag tag--green">Gemini Flash</span></td><td>超便宜、速度極快</td></tr>
+      </tbody>
+    </table>
+    <div class="card card--warn anim-up d5" style="margin-top: 12px;">
+      <strong>Fallback 機制很重要</strong> — 某個模型 API 掛掉時，自動切換到備援模型。<br>
+      Agent 系統最怕的不是回答不好，是完全沒回應。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Security ═══════ -->
+<div class="slide" data-i="23">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>安全 — 最重要但最容易忽略</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--red">💉</div><span><strong>Prompt Injection</strong> — 最大隱患。使用者輸入可能竄改 Agent 行為</span></div>
+    <div class="point anim-up d3"><div class="ico ico--amber">🔐</div><span><strong>權限隔離</strong> — 每個 Agent 只能存取需要的資源，最小權限原則</span></div>
+    <div class="point anim-up d4"><div class="ico ico--blue">📝</div><span><strong>稽核日誌</strong> — 所有 Agent 行為都要可追蹤、可回溯</span></div>
+    <div class="point anim-up d5"><div class="ico ico--green">🧪</div><span><strong>沙盒執行</strong> — 程式碼在隔離環境中運行，不影響主系統</span></div>
+    <div class="point anim-up d6"><div class="ico ico--purple">👤</div><span><strong>人類把關</strong> — 破壞性操作（刪除、發送、金錢）一律需要確認</span></div>
+    <div class="card card--accent anim-up d8" style="margin-top: 8px;">
+      金融場景對安全的要求更高：<strong>Agent 可以建議，但不能直接執行交易</strong>。<br>
+      Human-in-the-loop 不是退步，是負責任的設計。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Lessons ═══════ -->
+<div class="slide" data-i="24">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>踩過的坑</h2>
+  <div class="content">
+    <div class="two-col">
+      <div class="card card--warn anim-up d2">
+        <strong>🧠 Context Pollution</strong><br>
+        <span class="dim">Agent 讀到別人的記憶，把其他 Agent 的經歷當成自己的。<br>→ 記憶需按 Agent 過濾</span>
+      </div>
+      <div class="card card--warn anim-up d3">
+        <strong>🤖 角色漂移</strong><br>
+        <span class="dim">GPT 系列模型容易忘記人格設定，講到一半變成通用助手。<br>→ 需要 few-shot 範例固定風格</span>
+      </div>
+      <div class="card card--warn anim-up d4">
+        <strong>⏰ 排程失靈</strong><br>
+        <span class="dim">系統重啟後，排程器計算下次執行時間出錯，跳過整天。<br>→ 需要 fallback + 手動補執行機制</span>
+      </div>
+      <div class="card card--warn anim-up d5">
+        <strong>🔇 靜默失敗</strong><br>
+        <span class="dim">Agent 執行完工具但不回報結果，以為自己已經回覆了。<br>→ 指令中明確要求「做完要回報」</span>
+      </div>
+    </div>
+    <div class="card card--accent anim-up d7" style="margin-top: 12px;">
+      <strong>最大的教訓：Agent 不會主動告訴你它搞砸了。</strong>需要主動設計監控和驗證機制。
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Agentic Engineering ═══════ -->
+<div class="slide" data-i="25">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>與 Agent 協作的技巧</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">📐</div><span><strong>結構化指令</strong> — 明確的輸入 / 輸出格式，減少歧義</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">🔄</div><span><strong>迭代改進</strong> — 不要期待一次到位，觀察行為後調整設定</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">📝</div><span><strong>經驗累積</strong> — 讓 Agent 把踩過的坑記下來（LESSONS.md）</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">🎯</div><span><strong>關注意圖</strong> — 先理解需求再動手，「你有什麼問題想問我嗎？」</span></div>
+    <div class="point anim-up d6"><div class="ico ico--red">🧪</div><span><strong>自我反省</strong> — Agent 遇到問題時，讓它去讀自己的 source code 理解原因</span></div>
+    <div class="card card--green anim-up d8" style="margin-top: 8px;">
+      Agentic Engineering 不是寫更好的 prompt。<br>
+      <strong>是設計一個讓 Agent 能持續學習和改進的系統。</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Summary ═══════ -->
+<div class="slide" data-i="26">
+  <h2 class="anim-up d1"><span class="accent-dot"></span>總結</h2>
+  <div class="content">
+    <div class="point anim-up d2"><div class="ico ico--blue">01</div><span><strong>AI Agent ≠ Chatbot</strong> — 它是有記憶、有排程、能主動做事的數位同事</span></div>
+    <div class="point anim-up d3"><div class="ico ico--green">02</div><span><strong>Multi-Agent 分工</strong> — 每個 Agent 專注一件事，比一個全能 Agent 更可靠</span></div>
+    <div class="point anim-up d4"><div class="ico ico--amber">03</div><span><strong>架構可遷移</strong> — 電商、金融、任何需要多角色協作的場景都適用</span></div>
+    <div class="point anim-up d5"><div class="ico ico--purple">04</div><span><strong>安全第一</strong> — Human-in-the-loop + 權限隔離 + 稽核日誌</span></div>
+    <div class="point anim-up d6"><div class="ico ico--red">05</div><span><strong>持續演化</strong> — Agent 會學習、會記住、會變得更好。但需要你設計好演化的機制</span></div>
+    <div class="card card--accent anim-up d8" style="margin-top: 12px;">
+      <em>「很難贏過一個只是在找樂子的人。」</em><br>
+      <span class="dim">— Peter Steinberger, Lex Fridman Podcast #467</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SLIDE: Q&A ═══════ -->
+<div class="slide slide--title" data-i="27">
+  <h1>Q & A</h1>
+  <div class="subtitle">感謝聆聽</div>
+  <div class="meta" style="margin-top: 40px;">
+    github.com/openclaw/openclaw · docs.openclaw.ai
+  </div>
+</div>
+
+<!-- ─── UI ─── -->
+<div class="progress" id="progress"></div>
+<div class="counter" id="counter"></div>
+<div class="nav-hint">← → Space</div>
+<button class="toc-btn" id="tocBtn" title="目錄">☰</button>
+<div class="toc-panel" id="tocPanel"></div>
+</div>
+
+<script>
+  const S = document.querySelectorAll('.slide'), T = S.length;
+  let c = 0;
+  function resetAnims(slide) {
+    slide.querySelectorAll('[class*="anim-"]').forEach(el => {
+      el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+    });
+  }
+  function goSlide(n) {
+    if (n < 0 || n >= T) return;
+    const oldChat = S[c].querySelector('.chat-container');
+    if (oldChat) stopChatDemo(oldChat);
+    S[c].classList.remove('active');
+    c = n;
+    resetAnims(S[c]);
+    S[c].classList.add('active');
+    document.getElementById('progress').style.width = (c / (T - 1) * 100) + '%';
+    document.getElementById('counter').textContent = (c + 1) + ' / ' + T;
+    history.replaceState(null, '', '#' + c);
+    if (typeof updateToc === 'function') updateToc();
+    // Trigger chat demo if present
+    const chatEl = S[c].querySelector('.chat-container');
+    if (chatEl) setTimeout(() => runChatDemo(chatEl), 200);
+  }
+  function go(n) { goSlide(n); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); go(c + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); go(c - 1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(T - 1);
+  });
+  let tx = 0;
+  let ty = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; });
+  document.addEventListener('touchend', e => {
+    const dx = tx - e.changedTouches[0].clientX;
+    const dy = ty - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (Math.abs(dx) > 50) dx > 0 ? go(c + 1) : go(c - 1);
+    } else {
+      if (Math.abs(dy) > 50) dy > 0 ? go(c + 1) : go(c - 1);
+    }
+  });
+  document.addEventListener('click', e => {
+    if (window.getSelection().toString().length > 0) return;
+    if (e.target.closest('a, button, input, .code, .toc-panel')) return;
+    const w = innerWidth;
+    if (e.clientX > w * 0.85) go(c + 1);
+    else if (e.clientX < w * 0.15) go(c - 1);
+  });
+  const tocPanel = document.getElementById('tocPanel');
+  const tocBtn = document.getElementById('tocBtn');
+  S.forEach((s, i) => {
+    const h = s.querySelector('h1, h2');
+    const label = h ? h.textContent.trim() : `Slide ${i+1}`;
+    const isSection = s.classList.contains('slide--section');
+    const btn = document.createElement('button');
+    btn.className = 'toc-item' + (isSection ? ' is-section' : '');
+    btn.innerHTML = `<span class="toc-num">${i+1}</span><span>${label}</span>`;
+    btn.onclick = () => { goSlide(i); tocPanel.classList.remove('open'); };
+    tocPanel.appendChild(btn);
+  });
+  function updateToc() {
+    tocPanel.querySelectorAll('.toc-item').forEach((el, i) => {
+      el.classList.toggle('active', i === c);
+    });
+  }
+  tocBtn.onclick = (e) => { e.stopPropagation(); tocPanel.classList.toggle('open'); updateToc();
+    requestAnimationFrame(() => { const a = tocPanel.querySelector('.active'); if(a) a.scrollIntoView({block:'center'}); });
+  };
+  document.addEventListener('click', e => { if (!tocPanel.contains(e.target) && e.target !== tocBtn) tocPanel.classList.remove('open'); }, true);
+  // ─── Chat Demo Animation ───
+  let chatTimers = [];
+  function runChatDemo(container) {
+    if (!container) return;
+    chatTimers.forEach(t => clearTimeout(t));
+    chatTimers = [];
+    const items = container.querySelectorAll('[data-delay]');
+    items.forEach(el => el.classList.remove('show'));
+    items.forEach(el => {
+      const delay = parseInt(el.dataset.delay, 10);
+      chatTimers.push(setTimeout(() => el.classList.add('show'), delay));
+    });
+  }
+  function stopChatDemo(container) {
+    if (!container) return;
+    chatTimers.forEach(t => clearTimeout(t));
+    chatTimers = [];
+    container.querySelectorAll('[data-delay]').forEach(el => el.classList.remove('show'));
+  }
+
+  const h = parseInt(location.hash.slice(1), 10);
+  go(!isNaN(h) && h >= 0 && h < T ? h : 0);
+  window.addEventListener('hashchange', () => {
+    const n = parseInt(location.hash.slice(1), 10);
+    if (!isNaN(n) && n >= 0 && n < T) go(n);
+  });
+</script>
+</body>
+</html>
