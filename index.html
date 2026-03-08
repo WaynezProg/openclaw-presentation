@@ -208,18 +208,38 @@
     .slide-illust { max-height: 200px; justify-self: center; }
   }
   @media (max-width: 640px) {
-    .slide { padding: 32px 24px; } h1 { font-size: 1.8rem !important; } h2 { font-size: 1.25rem; margin-bottom: 20px; }
-    .slide--title .subtitle { font-size: 0.95rem; } .slide--title .meta { margin-top: 28px; font-size: 0.75rem; }
-    .slide--section h2 { font-size: 1.6rem; } .slide--section .section-num { font-size: 4rem; right: 24px; }
-    .content { gap: 12px; } .point { font-size: 0.9rem; gap: 10px; } .point .ico { width: 24px; height: 24px; font-size: 0.65rem; }
-    .card { padding: 14px 16px; font-size: 0.88rem; } .code { padding: 14px 16px; font-size: 0.68rem; }
-    .two-col, .three-col { grid-template-columns: 1fr; gap: 14px; }
-    .split-layout { grid-template-columns: 1fr; gap: 16px; }
+    body { overflow: auto; height: auto; background: var(--bg); }
+    .deck { width: 100%; height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; }
+    .slide { padding: 24px 20px 48px; overflow-y: auto; -webkit-overflow-scrolling: touch; justify-content: flex-start; }
+    h1 { font-size: 1.6rem !important; } h2 { font-size: 1.2rem; margin-bottom: 16px; }
+    .slide--title { justify-content: center; }
+    .slide--title h1 { font-size: 1.8rem !important; }
+    .slide--title .hero-img { width: 120px; height: 120px; margin-bottom: 16px; }
+    .slide--title .subtitle { font-size: 0.9rem; } .slide--title .meta { margin-top: 20px; font-size: 0.72rem; }
+    .slide--section { padding-bottom: 80px !important; justify-content: flex-end; }
+    .slide--section h2 { font-size: 1.5rem; } .slide--section .section-num { font-size: 3.5rem; right: 20px; }
+    .slide--section .desc { font-size: 0.9rem; }
+    .content { gap: 10px; } .point { font-size: 0.85rem; gap: 8px; } .point .ico { width: 22px; height: 22px; font-size: 0.6rem; border-radius: 6px; }
+    .card { padding: 12px 14px; font-size: 0.82rem; } .code { padding: 12px 14px; font-size: 0.65rem; }
+    .two-col, .three-col { grid-template-columns: 1fr; gap: 12px; }
+    .split-layout { grid-template-columns: 1fr !important; gap: 14px; }
     .split-layout .content { order: 1; }
-    .slide-illust { max-height: 160px; order: 0; justify-self: center; }
-    .node { padding: 8px 14px; min-width: 70px; } .flow-box { padding: 6px 12px; font-size: 0.78rem; }
-    .bug { padding: 12px 14px; } .bug .bug-t { font-size: 0.85rem; } .bug .bug-d { font-size: 0.8rem; }
+    .slide-illust { max-height: 140px; order: 0; justify-self: center; width: auto; }
+    .node { padding: 6px 10px; min-width: 60px; font-size: 0.8rem; } .node .n-label { font-size: 0.8rem; } .node .n-sub { font-size: 0.65rem; }
+    .flow-box { padding: 6px 10px; font-size: 0.75rem; } .flow-arrow { font-size: 0.9rem; }
+    .flow-row { gap: 4px; }
+    .diagram { gap: 8px; }
+    .layer { width: 90% !important; padding: 10px 16px; } .layer .l-title { font-size: 0.85rem; } .layer .l-desc { font-size: 0.75rem; }
+    .bug { padding: 10px 12px; } .bug .bug-t { font-size: 0.82rem; } .bug .bug-d { font-size: 0.78rem; } .bug .bug-f { font-size: 0.75rem; }
+    table { font-size: 0.78rem; } th { padding: 6px 8px; font-size: 0.68rem; } td { padding: 6px 8px; }
+    .chat-bubble { max-width: 260px; font-size: 0.8rem; padding: 8px 12px; }
+    .chat-avatar { width: 26px; height: 26px; font-size: 0.72rem; }
+    .tag { font-size: 0.68rem; padding: 1px 7px; }
+    .tl-date { width: 50px; font-size: 0.75rem; } .tl-body { font-size: 0.85rem; }
     .counter { font-size: 0.7rem; } .nav-hint { display: none; }
+    .progress { height: 2px; }
+    .toc-btn { width: 36px; height: 36px; font-size: 0.8rem; top: 8px; right: 8px; }
+    .toc-panel { max-height: 70vh; right: 8px; top: 48px; width: min(280px, 80vw); }
   }
   @media (prefers-reduced-motion: reduce) { .slide, .progress { transition: none; } [class*="anim-"] { animation: none !important; opacity: 1 !important; } }
 </style>
